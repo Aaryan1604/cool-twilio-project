@@ -1,13 +1,15 @@
 import requests
 import openai
+import os
 from dotenv import load_dotenv
 from detect import detect_food
 
 
 load_dotenv()
 
-openai.api_key = "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"
-api_key = "gt1BCwZRdKisVBhmCB0WcYKW6jy7T8dzPSwdJOJO"
+
+openai_api_key = os.environ.get("OPENAI_API_KEY")
+usda_api_key = os.environ.get("USDA_API_KEY")
 
 
 def save_image(image_url):
