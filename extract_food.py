@@ -10,10 +10,10 @@ openai.api_key = "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"
 api_key = "gt1BCwZRdKisVBhmCB0WcYKW6jy7T8dzPSwdJOJO"
 
 
-def save_image(img_url):
-    img_data = requests.get(img_url).content
-    with open('resources/image.jpg', 'wb') as handler:
-        handler.write(img_data)
+def save_image(image_url):
+    response = requests.get(image_url)
+    with open('resources/image.jpg', 'wb') as file:
+        file.write(response.content)
 
 
 def get_text_from_image(url):
@@ -21,46 +21,51 @@ def get_text_from_image(url):
     return detect_food()
 
 
-def get_openai_response(text):
-    hehe = "Give me just the name of the food (not the classification) from the description: " + text
+def get_food_name(description):
+    prompt = "Give me just the name of the food (not the classification) from the description: " + description
     response = openai.Completion.create(
         model="text-davinci-003",
-        prompt=hehe,
-        temperature=0,
+        prompt=prompt,
+        temperature=0.5,
         max_tokens=100
     )
-    return response.choices[0].text
+    return response.choices[0].text.strip()
 
-def call_API(foodName, apiKey):
-    url = f'https://api.nal.usda.gov/fdc/v1/foods/search?api_key={apiKey}&query={foodName}'
-    r = requests.get(url)
-    if r.status_code == 200:
-        print("nice 1")
-    return r.json()
 
-def extract_food_data(url):
-    foodNames = get_text_from_image(url)
-    foodName = get_openai_response(foodNames)
-    nutrient_data = dict()
-    ans = call_API(foodName, api_key)
-    if not ans:
-        print("no such food exists")
-        return None
-    food = ans['foods'][0]
+def retrieve_nutrient_data(food_name):
+    url = f'https://api.nal.usda.gov/fdc/v1/foods/search?api_key={usda_api_key}&query={food_name}'
+    response = requests.get(url)
+    if response.status_code == 200:
+        data = response.json()
+        if data['foods']:
+            food = data['foods'][0]
+            nutrients = {}
+            for nutrient in food['foodNutrients']:
+                name = nutrient['nutrientName']
+                value = nutrient['value']
+                unit = nutrient['unitName']
+                nutrients[name] = f'{value} {unit}'
+            return nutrients
+    return None
 
-    for nutrient in food['foodNutrients']:
-        nutrient_data[nutrient['nutrientName']] = nutrient['value']
-    return give_output(food['description'], nutrient_data)
 
-def give_output(name, nutritional_datas):
-    nutrient_values = ""
-    for nut, amount in nutritional_datas.items():
-        nutrient_values += str(nut) + ": " + str(amount)
-    food_prompt = "Give me a short description of " + name + " and all it's nutritional values which is listed as follows: " + nutritional_datas + "\n"
+def generate_output(name, nutrient_data):
+    prompt = f"Give me a short description of {name} and all its nutritional values which are listed as follows: {nutrient_data}\n"
     response = openai.Completion.create(
-        model="text-davinci-003",
-        prompt=food_prompt,
-        temperature=0,
+        model="text-davinci-002",
+        prompt=prompt,
+        temperature=0.5,
         max_tokens=100
     )
-    return response.choices[0].text
+    return response.choices[0].text.strip()
+
+
+def process_image(image_url):
+    food_description = get_text_from_image(image_url)
+    food_name = get_food_name(food_description)
+    nutrient_data = retrieve_nutrient_data(food_name)
+    if nutrient_data:
+        output_text = generate_output(food_name, nutrient_data)
+    else:
+        output_text = "Sorry, nutrient data not available for this food."
+    return output_text

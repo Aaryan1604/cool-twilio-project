@@ -18,6 +18,7 @@ def incoming_sms():
     if user_input == '1':
         pic_url = request.form.get('MediaUrl0')
         nutritional_value = extract_food_data(pic_url)
+        respond("hello!")
         return respond(f"{nutritional_value}")
     else:
         return respond("Please send a picture containing text!")
