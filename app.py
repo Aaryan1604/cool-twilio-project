@@ -1,6 +1,6 @@
 from flask import Flask, request
 from twilio.twiml.messaging_response import MessagingResponse
-from extract_food import extract_food_data
+from extract_food import process_image
 
 
 app = Flask(__name__)
@@ -17,11 +17,11 @@ def incoming_sms():
     user_input = request.form.get('NumMedia')
     if user_input == '1':
         pic_url = request.form.get('MediaUrl0')
-        nutritional_value = extract_food_data(pic_url)
-        respond("hello!")
+        nutritional_value = process_image(pic_url)
         return respond(f"{nutritional_value}")
     else:
-        return respond("Please send a picture containing text!")
+        return respond("Please send a picture containing food!")
+
 
 
 if __name__ == "__main__":

@@ -8,13 +8,13 @@ from detect import detect_food
 load_dotenv()
 
 
-openai_api_key = os.environ.get("OPENAI_API_KEY")
+openai.api_key = os.environ.get("OPENAI_API_KEY")
 usda_api_key = os.environ.get("USDA_API_KEY")
 
 
 def save_image(image_url):
     response = requests.get(image_url)
-    with open('resources/image.jpg', 'wb') as file:
+    with open('image.jpg', 'wb') as file:
         file.write(response.content)
 
 
@@ -63,9 +63,13 @@ def generate_output(name, nutrient_data):
 
 
 def process_image(image_url):
+    print("1")
     food_description = get_text_from_image(image_url)
+    print("2")
     food_name = get_food_name(food_description)
+    print("3")
     nutrient_data = retrieve_nutrient_data(food_name)
+    print("4")
     if nutrient_data:
         output_text = generate_output(food_name, nutrient_data)
     else:

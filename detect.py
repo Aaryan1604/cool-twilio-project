@@ -1,12 +1,14 @@
 import io
 import os
 from google.cloud import vision
-
+from google.oauth2 import service_account
 
 def detect_food():
-    client = vision.ImageAnnotatorClient()
+    print("detect_food")
+    credentials = service_account.Credentials.from_service_account_file('cloud.json')
+    client = vision.ImageAnnotatorClient(credentials=credentials)
 
-    file_name = os.path.abspath('resources/image.jpg')
+    file_name = os.path.abspath('image.jpg')
 
     with io.open(file_name, 'rb') as image_file:
         content = image_file.read()
@@ -14,4 +16,6 @@ def detect_food():
     image = vision.Image(content=content)
     response = client.text_detection(image=image)
     texts = response.text_annotations
+    if not texts:
+        return "not food"
     return(texts[0].description)
